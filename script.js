@@ -1,61 +1,54 @@
-const player = document.querySelector('.player');
-const video = player.querySelector('.player__video');
-const progress = player.querySelector('.progress');
-const progressBar = player.querySelector('.progress__filled');
-const toggle = player.querySelector('.toggle');
-const volume = player.querySelector('input[name="volume"]');
-const playbackRate = player.querySelector('input[name="playbackRate"]');
-const skipButtons = player.querySelectorAll('[data-skip]');
+const player = document.querySelector('.player__video');
+const progress = document.querySelector('.progress');
+const progressBar = document.querySelector('.progress__filled');
+const toggleButton = document.querySelector('.toggle'); // Select the toggle button
+const volumeSlider = document.querySelector('input[name="volume"]');
+const playbackRateSlider = document.querySelector('input[name="playbackRate"]');
+const rewindButton = document.querySelector('.rewind'); // Select the rewind button
+const skipButtons = document.querySelectorAll('[data-skip]');
 
 function togglePlay() {
-  const method = video.paused ? 'play' : 'pause';
-  video[method]();
+  if (player.paused) {
+    player.play();
+    toggleButton.textContent = '❚ ❚';
+  } else {
+    player.pause();
+    toggleButton.textContent = '►';
+  }
 }
 
-function updateButton() {
-  const icon = video.paused ? '►' : '❚ ❚';
-  toggle.textContent = icon;
-}
-
-function skip() {
-  video.currentTime += parseFloat(this.dataset.skip);
-}
-
-function handleVolumeChange() {
-  video.volume = this.value;
-}
-
-function handlePlaybackRateChange() {
-  video.playbackRate = this.value;
-}
-
-function handleProgress() {
-  const percent = (video.currentTime / video.duration) * 100;
+function updateProgressBar() {
+  const percent = (player.currentTime / player.duration) * 100;
   progressBar.style.flexBasis = `${percent}%`;
 }
 
-function scrub(e) {
-  const scrubTime = (e.offsetX / progress.offsetWidth) * video.duration;
-  video.currentTime = scrubTime;
+function skip() {
+  player.currentTime += parseFloat(this.dataset.skip);
 }
 
-video.addEventListener('click', togglePlay);
-video.addEventListener('play', updateButton);
-video.addEventListener('pause', updateButton);
-video.addEventListener('timeupdate', handleProgress);
+function handleRangeUpdate() {
+  player[this.name] = this.value;
+}
 
-toggle.addEventListener('click', togglePlay);
+function handleProgressClick(e) {
+  const scrubTime = (e.offsetX / progress.offsetWidth) * player.duration;
+  player.currentTime = scrubTime;
+}
 
+player.addEventListener('timeupdate', updateProgressBar);
+toggleButton.addEventListener('click', togglePlay);
+volumeSlider.addEventListener('input', handleRangeUpdate);
+playbackRateSlider.addEventListener('input', handleRangeUpdate);
 skipButtons.forEach(button => button.addEventListener('click', skip));
+progress.addEventListener('click', handleProgressClick);
 
-volume.addEventListener('change', handleVolumeChange);
-volume.addEventListener('mousemove', handleVolumeChange);
-
-playbackRate.addEventListener('change', handlePlaybackRateChange);
-playbackRate.addEventListener('mousemove', handlePlaybackRateChange);
-
-let mousedown = false;
-progress.addEventListener('click', scrub);
-progress.addEventListener('mousemove', (e) => mousedown && scrub(e));
-progress.addEventListener('mousedown', () => mousedown = true);
-progress.addEventListener('mouseup', () => mousedown = false);
+// Export the functions if you are using Cypress
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    togglePlay,
+    updateProgressBar,
+    skip,
+    handleRangeUpdate,
+    handleProgressClick
+  };
+}
